@@ -201,8 +201,13 @@
           scanner = null;
           pulsante.disabled = false;
 
-          // Il collegamento alla Gestione Negozio
-          // verrà aggiunto dopo il primo test.
+          
+const gestioneNegozio =
+  "https://script.google.com/macros/s/AKfycbzjW4bYk0xvyzlQ-a8_3dBdaFQ8mpCDC6796sid9nBcCwHeBK8MSHJZezt9YHr485wU7g/exec";
+
+window.location.href =
+  gestioneNegozio + "?t=" + encodeURIComponent(codice);
+
         }
       );
 
