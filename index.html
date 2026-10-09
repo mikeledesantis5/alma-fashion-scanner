@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+
+  <title>ALMA FASHION - Scanner QR</title>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f3f0eb;
+      font-family: Arial, sans-serif;
+      color: #222;
+    }
+
+    .scheda {
+      max-width: 460px;
+      margin: 20px auto;
+      padding: 22px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 5px 25px #0002;
+    }
+
+    header {
+      background: #171717;
+      color: #d9b66e;
+      text-align: center;
+      padding: 24px;
+      border-radius: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      letter-spacing: 2px;
+    }
+
+    header p {
+      color: white;
+      font-size: 14px;
+    }
+
+    #reader {
+      width: 100%;
+      margin-top: 20px;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    #messaggio {
+      text-align: center;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 16px;
+      border: none;
+      border-radius: 10px;
+      background: #171717;
+      color: #d9b66e;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .5;
+    }
+
+    .nota {
+      text-align: center;
+      color: #777;
+      font-size: 12px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+<main class="scheda">
+
+  <header>
+    <h1>ALMA FASHION</h1>
+    <p>Scanner QR Code</p>
+  </header>
+
+  <div id="reader"></div>
+
+  <button id="avvia" onclick="avviaScanner()">
+    📷 Avvia fotocamera
+  </button>
+
+  <div id="messaggio">
+    Premi il pulsante per iniziare.
+  </div>
+
+  <div class="nota">
+    Scanner tessere Fidelity
+  </div>
+
+</main>
+
+<script>
+  let scanner = null;
+  let codiceLetto = false;
+
+  const messaggio =
+    document.getElementById("messaggio");
+
+  const pulsante =
+    document.getElementById("avvia");
+
+  function mostraMessaggio(testo) {
+    messaggio.textContent = testo;
+  }
+
+  function estraiCodice(testo) {
+    let codice = String(testo || "").trim();
+
+    if (/^https?:\/\//i.test(codice)) {
+      const url = new URL(codice);
+      codice = url.searchParams.get("t") || "";
+    }
+
+    if (!/^[a-f0-9]{32}$/i.test(codice)) {
+      throw new Error("QR code non valido");
+    }
+
+    return codice;
+  }
+
+  async function avviaScanner() {
+    if (scanner) return;
+
+    try {
+      if (typeof Html5Qrcode === "undefined") {
+        throw new Error(
+          "Lettore QR non caricato. Controlla Internet."
+        );
+      }
+
+      codiceLetto = false;
+      pulsante.disabled = true;
+
+      mostraMessaggio("Apertura fotocamera...");
+
+      scanner = new Html5Qrcode("reader");
+
+      await scanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: function(w, h) {
+            const lato =
+              Math.floor(Math.min(w, h) * 0.75);
+
+            return {
+              width: lato,
+              height: lato
+            };
+          }
+        },
+        async function(testoQR) {
+          if (codiceLetto) return;
+
+          let codice;
+
+          try {
+            codice = estraiCodice(testoQR);
+          } catch (e) {
+            mostraMessaggio(
+              "Inquadra una tessera ALMA FASHION valida."
+            );
+            return;
+          }
+
+          codiceLetto = true;
+
+          mostraMessaggio(
+            "QR riconosciuto! Codice cliente: " +
+            codice.slice(0, 6) + "..."
+          );
+
+          try {
+            await scanner.stop();
+            scanner.clear();
+          } catch (e) {}
+
+          scanner = null;
+          pulsante.disabled = false;
+
+          // Il collegamento alla Gestione Negozio
+          // verrà aggiunto dopo il primo test.
+        }
+      );
+
+      mostraMessaggio(
+        "Fotocamera attiva. Inquadra il QR code."
+      );
+
+    } catch (errore) {
+      mostraMessaggio(
+        "Errore fotocamera: " + errore.message
+      );
+
+      if (scanner) {
+        try { scanner.clear(); } catch (e) {}
+        scanner = null;
+      }
+
+      pulsante.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
